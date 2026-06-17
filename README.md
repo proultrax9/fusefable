@@ -1,71 +1,74 @@
 # Fuse Fable
 
-ฟิวชั่นหลาย AI model พร้อมกัน แล้วเลือกคำตอบที่ดีที่สุดสำหรับงานโค้ด — latency ≈ x2
-(ยิงทุกตัวขนานกัน + judge รอบเดียว) ไม่ใช่ x7–x15
+🌐 **Languages:** English · [ไทย (Thai)](https://github.com/proultrax9/fusefable/blob/main/README.th.md)
 
-ใช้ได้หลายรูปแบบ: **CLI**, **MCP server** (เชื่อม Cursor/VS Code/Claude), และ
-**subagent/pipe** (ให้ tool หรือสคริปต์อื่นเรียก)
+Fan out a coding prompt to many AI models **in parallel**, then let a judge pick the
+single best answer — total latency ≈ **x2** (slowest model + one judge pass), not x7–x15.
 
-## ติดตั้ง
+Works three ways: as a **CLI**, as an **MCP server** (connect Cursor / VS Code / Claude),
+and as a **subagent / pipe** (callable by other tools and scripts).
+
+## Install
 ```bash
-pip install fusefable            # หลัก
-pip install "fusefable[mcp]"     # ถ้าจะใช้เป็น MCP server
+pip install fusefable            # core
+pip install "fusefable[mcp]"     # if you want the MCP server
 ```
-หรือจาก source:
+From source:
 ```bash
 git clone https://github.com/proultrax9/fusefable.git
 cd fusefable
 pip install -e ".[mcp]"
 ```
 
-## ตั้งค่า (ครั้งแรก)
+## Setup (first run)
 ```bash
 fusefable config
 ```
-- เลือก **AI Gateway** → ใส่ key เดียวพอ แล้วถาม "จะใช้กี่โมเดล?" → วนถามทีละตัว
-  - รองรับหลายเจ้า (เติม URL อัตโนมัติ): `openrouter`, `groq`, `together`,
+- Choose **AI Gateway** → one key for everything, then it asks "how many models?" and
+  prompts for each one.
+  - Known gateways (base URL auto-filled): `openrouter`, `groq`, `together`,
     `fireworks`, `deepinfra`, `novita`, `hyperbolic`, `aimlapi`, `portkey`,
-    `deepseek`, `openai` — เจ้าอื่นก็ใช้ได้ แค่พิมพ์ base_url เอง
-- หรือ **Provider เดี่ยว** → ถามว่าจะใช้กี่เจ้า แล้วถาม **ชนิด API** ของแต่ละเจ้า:
-  - `openai_compat` — เจ้าที่เป็น OpenAI-compatible (ใส่ base_url เอง)
-  - `anthropic` — Anthropic native (`/v1/messages`, เติม base_url อัตโนมัติ)
-  - `google` — Google Gemini native (`generateContent`, เติม base_url อัตโนมัติ)
+    `deepseek`, `openai` — any other works too, just type its base URL.
+- Or **Single providers** → it asks how many, then the **API kind** of each:
+  - `openai_compat` — any OpenAI-compatible endpoint (you provide the base URL)
+  - `anthropic` — Anthropic native (`/v1/messages`, base URL auto-filled)
+  - `google` — Google Gemini native (`generateContent`, base URL auto-filled)
 
-ตั้ง API key เป็น environment variable ตามชื่อที่ wizard ถาม:
+Set your API key as an environment variable named as the wizard asks:
 ```bash
 export OPENROUTER_API_KEY=sk-...      # macOS/Linux
-setx OPENROUTER_API_KEY "sk-..."      # Windows (เปิด terminal ใหม่หลังตั้ง)
+setx OPENROUTER_API_KEY "sk-..."      # Windows (open a new terminal afterwards)
 ```
 
-config ถูกเก็บที่ `~/.fusefable/config.yaml`
+Config is stored at `~/.fusefable/config.yaml`.
 
-## 1) ใช้เป็น CLI
+## 1) Use as a CLI
 ```bash
-fusefable ask "เขียนฟังก์ชัน quicksort ใน Python"
-fusefable ask --show-all "..."             # ดูคำตอบทุกตัว + เหตุผล judge
-fusefable ask --models gpt-5,qwen3-coder "..."   # เลือกเฉพาะบางตัว
-fusefable ask --cheap "..."                # ใช้ cheap_models ใน config
-ff ask "..."                                # alias สั้น
+fusefable ask "Write a quicksort function in Python"
+fusefable ask --show-all "..."                   # show every answer + judge reason
+fusefable ask --models gpt-5,qwen3-coder "..."   # restrict to specific models
+fusefable ask --cheap "..."                      # use cheap_models from config
+ff ask "..."                                      # short alias
 ```
 
-## 2) ใช้เป็น subagent / ต่อ pipe (ให้ tool อื่นเรียก)
+## 2) Use as a subagent / in a pipe
 ```bash
-fusefable ask --quiet "..."                # พิมพ์เฉพาะคำตอบ (ไม่มี header)
-echo "อธิบายโค้ดนี้" | fusefable ask --quiet   # รับคำถามจาก stdin
-cat bug.py | fusefable ask -q "ช่วยหาบั๊กในโค้ดนี้"
-fusefable ask --json "..."                 # output JSON (answer, chosen_model, reason, cost, candidates)
+fusefable ask --quiet "..."                # print only the answer (no headers)
+echo "Explain this code" | fusefable ask --quiet   # read the prompt from stdin
+cat bug.py | fusefable ask -q "Find the bug in this code"
+fusefable ask --json "..."                 # JSON output: answer, chosen_model, reason, cost, candidates
 ```
-`--json` เหมาะกับสคริปต์/agent ที่ parse ผลต่อ; `--quiet` เหมาะกับต่อ pipe
+`--json` is ideal for scripts/agents that parse the result; `--quiet` is ideal for piping.
 
-## 3) ใช้เป็น MCP server (Cursor / VS Code / Claude / agent อื่น)
-รันเป็น MCP server ผ่าน stdio:
+## 3) Use as an MCP server (Cursor / VS Code / Claude / other agents)
+Run as an MCP server over stdio:
 ```bash
 fusefable mcp
 ```
-มี tool ชื่อ `fuse_ask(question, models?, cheap?)` ให้ client เรียก
+Exposes a tool `fuse_ask(question, models?, cheap?)` for any MCP client.
 
 ### Cursor
-`~/.cursor/mcp.json` (หรือ Settings → MCP):
+`~/.cursor/mcp.json` (or Settings → MCP):
 ```json
 {
   "mcpServers": {
@@ -79,7 +82,7 @@ fusefable mcp
 ```
 
 ### VS Code (Copilot / MCP-compatible extension)
-`.vscode/mcp.json` ในโปรเจกต์:
+`.vscode/mcp.json` in your project:
 ```json
 {
   "servers": {
@@ -106,16 +109,16 @@ fusefable mcp
 }
 ```
 
-> ต้องติดตั้ง `pip install "fusefable[mcp]"` และรัน `fusefable config` ไว้ก่อน
-> ถ้า `fusefable` ไม่อยู่ใน PATH ของแอป ให้ใส่ path เต็ม เช่น `python -m fusefable.cli`
+> Requires `pip install "fusefable[mcp]"` and a completed `fusefable config`.
+> If `fusefable` isn't on the app's PATH, use a full path such as `python -m fusefable.cli`.
 
-## ทำงานยังไง
-1. **fan-out** — ยิงทุกโมเดลพร้อมกันด้วย `asyncio` (เวลารวม = ตัวช้าสุด)
-2. ตัวไหน timeout/พัง → ตัดทิ้ง ไม่ลากระบบช้า
-3. **judge** — ปกปิดชื่อโมเดล (Answer A/B/C...) แล้วให้โมเดล judge เลือกตัวดีสุด
-4. คืนคำตอบที่ดีที่สุด + ประมาณค่าใช้จ่าย
+## How it works
+1. **Fan-out** — every model is called concurrently via `asyncio` (total time = slowest model).
+2. Any model that times out or fails is dropped — it never slows the whole run.
+3. **Judge** — model names are anonymized (Answer A/B/C...) and a judge model picks the best.
+4. Returns the best answer plus an estimated cost.
 
-## พัฒนา
+## Development
 ```bash
 pip install -e ".[dev,mcp]"
 pytest -q
