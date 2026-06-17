@@ -25,6 +25,7 @@ class Config:
     providers: list[SingleProvider] = field(default_factory=list)
     min_responses: int = 1
     budget_cap_usd: float | None = None
+    cheap_models: list[str] = field(default_factory=list)
 
     def resolve_api_key(self) -> str:
         return os.environ.get(self.api_key_env, "")
