@@ -4,6 +4,15 @@ import json
 import sys
 from typing import Optional
 import typer
+
+# Windows console บางเครื่อง codepage ไม่ใช่ UTF-8 → พิมพ์ภาษาไทยแล้ว crash
+# บังคับ stdout/stderr เป็น UTF-8 เพื่อให้ help/ผลลัพธ์ภาษาไทยไม่พัง
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except Exception:  # noqa: BLE001
+            pass
 from fusefable.config import load_config, save_config, default_config_path, Config
 from fusefable.core import fuse
 from fusefable.wizard import run_wizard
