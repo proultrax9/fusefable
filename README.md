@@ -16,7 +16,10 @@ pip install -e .
 ```bash
 fusefable config
 ```
-- เลือก **AI Gateway** (เช่น OpenRouter) → ใส่ key เดียวพอ
+- เลือก **AI Gateway** → ใส่ key เดียวพอ แล้วถามว่าจะใช้กี่โมเดล + ทีละตัว
+  - รองรับหลายเจ้า (เติม URL อัตโนมัติ): `openrouter`, `groq`, `together`,
+    `fireworks`, `deepinfra`, `novita`, `hyperbolic`, `aimlapi`, `portkey`,
+    `deepseek`, `openai` — เจ้าอื่นก็ใช้ได้ แค่พิมพ์ base_url เอง
 - หรือ **Provider เดี่ยว** → ถามว่าจะใช้กี่เจ้า แล้วใส่ base_url + ชื่อ env ของ key ของแต่ละเจ้า
 
 ตั้ง API key เป็น environment variable ตามชื่อที่ wizard ถาม เช่น:

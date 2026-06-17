@@ -1,4 +1,55 @@
-from fusefable.wizard import build_config_from_answers
+from fusefable.wizard import build_config_from_answers, run_wizard
+
+
+def _scripted(responses):
+    """สร้าง fake prompt ที่ตอบตามลำดับ responses."""
+    it = iter(responses)
+
+    def fake_prompt(_msg=""):
+        return next(it)
+
+    return fake_prompt
+
+
+def test_run_wizard_gateway_asks_how_many_then_each_model():
+    # เลือก gateway(1) → openrouter → key env → จำนวน 3 → 3 โมเดล → judge
+    answers = _scripted([
+        "1",                       # mode = gateway
+        "openrouter",              # gateway name (base_url เติมอัตโนมัติ)
+        "OPENROUTER_API_KEY",      # key env
+        "3",                       # จะใช้กี่ตัว
+        "openai/gpt-5",            # โมเดลที่ 1
+        "anthropic/claude-opus-4.1",  # โมเดลที่ 2
+        "qwen/qwen3-coder",        # โมเดลที่ 3
+        "deepseek/deepseek-chat",  # judge
+    ])
+    cfg = run_wizard(prompt=answers)
+    assert cfg.mode == "gateway"
+    assert cfg.gateway_name == "openrouter"
+    assert cfg.gateway_base_url == "https://openrouter.ai/api/v1"  # เติมอัตโนมัติ
+    assert len(cfg.models) == 3
+    assert cfg.models == ["openai/gpt-5", "anthropic/claude-opus-4.1",
+                          "qwen/qwen3-coder"]
+    assert cfg.judge_model == "deepseek/deepseek-chat"
+
+
+def test_run_wizard_gateway_autofills_other_known_gateway():
+    # groq เป็น gateway ที่รู้จัก → เติม base_url อัตโนมัติ ไม่ถาม URL
+    answers = _scripted([
+        "1", "groq", "GROQ_API_KEY", "1", "llama-3.3-70b", "llama-3.3-70b",
+    ])
+    cfg = run_wizard(prompt=answers)
+    assert cfg.gateway_base_url == "https://api.groq.com/openai/v1"
+
+
+def test_run_wizard_gateway_unknown_asks_base_url():
+    # gateway ที่ไม่รู้จัก → ถาม base_url เอง (รองรับทุกเจ้า)
+    answers = _scripted([
+        "1", "mygw", "https://my.gateway/v1", "MY_KEY", "1", "m1", "m1",
+    ])
+    cfg = run_wizard(prompt=answers)
+    assert cfg.gateway_name == "mygw"
+    assert cfg.gateway_base_url == "https://my.gateway/v1"
 
 
 def test_gateway_mode_builds_single_key_config():
