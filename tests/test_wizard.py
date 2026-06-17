@@ -69,6 +69,25 @@ def test_gateway_mode_builds_single_key_config():
     assert len(cfg.providers) == 0
 
 
+def test_run_wizard_single_mode_native_autofills_base_url():
+    # 2 เจ้า: anthropic (native, เติม URL) + openai_compat (พิมพ์ URL เอง)
+    answers = _scripted([
+        "2",                       # mode = single
+        "2",                       # จะใช้กี่เจ้า
+        # เจ้าที่ 1: anthropic native
+        "claude", "anthropic", "ANTHROPIC_API_KEY", "claude-opus-4-8",
+        # เจ้าที่ 2: openai_compat
+        "ds", "openai_compat", "https://api.deepseek.com/v1", "DS_KEY", "deepseek-chat",
+        "deepseek-chat",           # judge
+    ])
+    cfg = run_wizard(prompt=answers)
+    assert cfg.mode == "single"
+    assert cfg.providers[0].kind == "anthropic"
+    assert cfg.providers[0].base_url == "https://api.anthropic.com/v1"  # เติมอัตโนมัติ
+    assert cfg.providers[1].kind == "openai_compat"
+    assert cfg.providers[1].base_url == "https://api.deepseek.com/v1"
+
+
 def test_single_mode_builds_per_provider_config():
     answers = {
         "mode": "single",

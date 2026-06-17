@@ -1,5 +1,6 @@
 from __future__ import annotations
 from fusefable.config import Config, SingleProvider
+from fusefable.providers.factory import NATIVE_BASE_URLS
 
 # base_url ของ AI gateway ที่รู้จัก (OpenAI-compatible) — เติมอัตโนมัติ
 # เจ้าที่ไม่อยู่ในนี้ก็ยังใช้ได้ แค่ผู้ใช้พิมพ์ base_url เอง → รองรับทุกเจ้า
@@ -75,11 +76,17 @@ def run_wizard(prompt=input) -> Config:
     for i in range(n):
         print(f"-- เจ้าที่ {i + 1} --")
         name = prompt("  ชื่อ: ").strip()
-        base = prompt("  base_url: ").strip()
+        kind = prompt("  ชนิด API [openai_compat/anthropic/google] "
+                      "(Enter = openai_compat): ").strip() or "openai_compat"
+        base = NATIVE_BASE_URLS.get(kind)   # เติมอัตโนมัติสำหรับ native
+        if base:
+            print(f"  (เติม base_url อัตโนมัติ: {base})")
+        else:
+            base = prompt("  base_url: ").strip()
         key_env = prompt("  ชื่อ env var ของ API key: ").strip()
         models_raw = prompt("  โมเดล (คั่นด้วย comma): ").strip()
         models = [m.strip() for m in models_raw.split(",") if m.strip()]
-        providers.append({"name": name, "base_url": base,
+        providers.append({"name": name, "base_url": base, "kind": kind,
                           "api_key_env": key_env, "models": models})
     judge = prompt("judge model: ").strip()
     return build_config_from_answers({

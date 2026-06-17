@@ -26,7 +26,10 @@ fusefable config
   - รองรับหลายเจ้า (เติม URL อัตโนมัติ): `openrouter`, `groq`, `together`,
     `fireworks`, `deepinfra`, `novita`, `hyperbolic`, `aimlapi`, `portkey`,
     `deepseek`, `openai` — เจ้าอื่นก็ใช้ได้ แค่พิมพ์ base_url เอง
-- หรือ **Provider เดี่ยว** → ถามว่าจะใช้กี่เจ้า แล้วใส่ base_url + ชื่อ env ของ key แต่ละเจ้า
+- หรือ **Provider เดี่ยว** → ถามว่าจะใช้กี่เจ้า แล้วถาม **ชนิด API** ของแต่ละเจ้า:
+  - `openai_compat` — เจ้าที่เป็น OpenAI-compatible (ใส่ base_url เอง)
+  - `anthropic` — Anthropic native (`/v1/messages`, เติม base_url อัตโนมัติ)
+  - `google` — Google Gemini native (`generateContent`, เติม base_url อัตโนมัติ)
 
 ตั้ง API key เป็น environment variable ตามชื่อที่ wizard ถาม:
 ```bash

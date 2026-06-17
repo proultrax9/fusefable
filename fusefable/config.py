@@ -11,6 +11,7 @@ class SingleProvider:
     base_url: str
     api_key_env: str
     models: list[str] = field(default_factory=list)
+    kind: str = "openai_compat"   # openai_compat | anthropic | google
 
 
 @dataclass
