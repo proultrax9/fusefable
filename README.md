@@ -112,11 +112,76 @@ Exposes a tool `fuse_ask(question, models?, cheap?)` for any MCP client.
 > Requires `pip install "fusefable[mcp]"` and a completed `fusefable config`.
 > If `fusefable` isn't on the app's PATH, use a full path such as `python -m fusefable.cli`.
 
-## How it works
-1. **Fan-out** — every model is called concurrently via `asyncio` (total time = slowest model).
-2. Any model that times out or fails is dropped — it never slows the whole run.
-3. **Judge** — model names are anonymized (Answer A/B/C...) and a judge model picks the best.
-4. Returns the best answer plus an estimated cost.
+## Architecture
+
+```
+              ENTRYPOINTS (one shared core)
+   ┌─────────────┬──────────────────┬─────────────────────┐
+   │  CLI        │  pipe / subagent │  MCP server         │
+   │ fusefable   │ stdin · --quiet  │ fusefable mcp       │
+   │   ask "..." │      · --json    │ tool: fuse_ask()    │
+   └──────┬──────┴────────┬─────────┴──────────┬──────────┘
+          └───────────────┴────────────────────┘
+                          │
+                          ▼
+                ┌───────────────────┐      ~/.fusefable/config.yaml
+                │   core.fuse()     │◀──── (gateway | single providers,
+                └─────────┬─────────┘        models, judge, timeout)
+                          │
+                          ▼
+                ┌───────────────────┐
+                │  routing          │  build (provider, model) routes
+                │  + provider       │  via factory → pick adapter by kind
+                │    factory        │
+                └─────────┬─────────┘
+                          ▼
+        ┌──────────────  FAN-OUT (asyncio.gather)  ──────────────┐
+        │   ทุกตัวยิงพร้อมกัน · per-model timeout · ตัวพัง = ตัดทิ้ง       │
+        │                                                         │
+        ▼            ▼              ▼                ▼            ▼
+   ┌─────────┐ ┌──────────┐  ┌────────────┐   ┌──────────┐  ┌────────┐
+   │ openai_ │ │ anthropic│  │  google    │   │ openai_  │  │  ...   │
+   │ compat  │ │ native   │  │  native    │   │ compat   │  │        │
+   │(gateway)│ │/v1/msgs  │  │generateCont│   │          │  │        │
+   └────┬────┘ └────┬─────┘  └─────┬──────┘   └────┬─────┘  └───┬────┘
+        └───────────┴──────────────┴───────────────┴───────────┘
+                          │  Completion[] (สำเร็จเท่านั้น)
+                          ▼
+                ┌───────────────────┐
+                │  judge            │  ปกปิดชื่อ → Answer A/B/C...
+                │  (anonymized)     │  ให้ judge model เลือกตัวดีสุด
+                └─────────┬─────────┘  (พัง → fallback ตัวแรก)
+                          ▼
+                ┌───────────────────┐
+                │  FinalAnswer      │  text · chosen_model · reason
+                │  (+ cost estimate)│  · cost_usd · candidates
+                └───────────────────┘
+```
+
+**Request lifecycle**
+1. **Entrypoint** — CLI, a pipe/subagent call, or the MCP tool `fuse_ask()` — all funnel into one core function `core.fuse()`.
+2. **Routing** — config (gateway or single providers) is turned into `(provider, model)` routes; a provider **factory** picks the right adapter per `kind` (`openai_compat` / `anthropic` / `google`).
+3. **Fan-out** — every model is called concurrently via `asyncio.gather` (total time = slowest model). Each call has its own timeout; any model that times out or errors is dropped and never slows the run.
+4. **Judge** — model names are anonymized (Answer A/B/C...) so the judge picks on quality alone, not by brand; if the judge fails it falls back to the first answer.
+5. **Result** — returns the best answer with the chosen model, the judge's reason, an estimated cost, and all candidates.
+
+**Components** (`fusefable/`)
+
+| File | Responsibility |
+|---|---|
+| `cli.py` | Typer CLI (`ask` / `config` / `mcp`), output modes |
+| `mcp_server.py` | MCP server exposing the `fuse_ask` tool |
+| `core.py` | shared `fuse()` entrypoint + model selection |
+| `config.py` | load/save `config.yaml` |
+| `wizard.py` | interactive setup (gateway vs single, API kind) |
+| `routing.py` | config → `(provider, model)` routes |
+| `providers/factory.py` | pick adapter by `kind` |
+| `providers/openai_compat.py` · `anthropic.py` · `google.py` | provider adapters |
+| `fanout.py` | parallel fan-out (drops failures) |
+| `judge.py` | anonymized judging |
+| `fusion.py` | orchestrator: fan-out → judge → `FinalAnswer` |
+| `cost.py` | token-based cost estimate |
+| `models.py` | dataclasses: `Completion`, `FinalAnswer`, `ProviderConfig` |
 
 ## Development
 ```bash

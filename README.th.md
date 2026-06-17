@@ -111,11 +111,76 @@ fusefable mcp
 > ต้องติดตั้ง `pip install "fusefable[mcp]"` และรัน `fusefable config` ไว้ก่อน
 > ถ้า `fusefable` ไม่อยู่ใน PATH ของแอป ให้ใส่ path เต็ม เช่น `python -m fusefable.cli`
 
-## ทำงานยังไง
-1. **fan-out** — ยิงทุกโมเดลพร้อมกันด้วย `asyncio` (เวลารวม = ตัวช้าสุด)
-2. ตัวไหน timeout/พัง → ตัดทิ้ง ไม่ลากระบบช้า
-3. **judge** — ปกปิดชื่อโมเดล (Answer A/B/C...) แล้วให้โมเดล judge เลือกตัวดีสุด
-4. คืนคำตอบที่ดีที่สุด + ประมาณค่าใช้จ่าย
+## สถาปัตยกรรม (Architecture)
+
+```
+              ทางเข้า (ใช้ core ร่วมกันตัวเดียว)
+   ┌─────────────┬──────────────────┬─────────────────────┐
+   │  CLI        │  pipe / subagent │  MCP server         │
+   │ fusefable   │ stdin · --quiet  │ fusefable mcp       │
+   │   ask "..." │      · --json    │ tool: fuse_ask()    │
+   └──────┬──────┴────────┬─────────┴──────────┬──────────┘
+          └───────────────┴────────────────────┘
+                          │
+                          ▼
+                ┌───────────────────┐      ~/.fusefable/config.yaml
+                │   core.fuse()     │◀──── (gateway | provider เดี่ยว,
+                └─────────┬─────────┘        models, judge, timeout)
+                          │
+                          ▼
+                ┌───────────────────┐
+                │  routing          │  สร้าง (provider, model) routes
+                │  + provider       │  ผ่าน factory → เลือก adapter ตาม kind
+                │    factory        │
+                └─────────┬─────────┘
+                          ▼
+        ┌──────────────  FAN-OUT (asyncio.gather)  ──────────────┐
+        │   ทุกตัวยิงพร้อมกัน · per-model timeout · ตัวพัง = ตัดทิ้ง       │
+        │                                                         │
+        ▼            ▼              ▼                ▼            ▼
+   ┌─────────┐ ┌──────────┐  ┌────────────┐   ┌──────────┐  ┌────────┐
+   │ openai_ │ │ anthropic│  │  google    │   │ openai_  │  │  ...   │
+   │ compat  │ │ native   │  │  native    │   │ compat   │  │        │
+   │(gateway)│ │/v1/msgs  │  │generateCont│   │          │  │        │
+   └────┬────┘ └────┬─────┘  └─────┬──────┘   └────┬─────┘  └───┬────┘
+        └───────────┴──────────────┴───────────────┴───────────┘
+                          │  Completion[] (สำเร็จเท่านั้น)
+                          ▼
+                ┌───────────────────┐
+                │  judge            │  ปกปิดชื่อ → Answer A/B/C...
+                │  (anonymized)     │  ให้ judge model เลือกตัวดีสุด
+                └─────────┬─────────┘  (พัง → fallback ตัวแรก)
+                          ▼
+                ┌───────────────────┐
+                │  FinalAnswer      │  text · chosen_model · reason
+                │  (+ cost estimate)│  · cost_usd · candidates
+                └───────────────────┘
+```
+
+**ลำดับการทำงาน (request lifecycle)**
+1. **ทางเข้า** — CLI, pipe/subagent, หรือ MCP tool `fuse_ask()` — ทั้งหมดวิ่งเข้า core function เดียว `core.fuse()`
+2. **Routing** — config (gateway หรือ provider เดี่ยว) ถูกแปลงเป็น `(provider, model)` routes; provider **factory** เลือก adapter ตาม `kind` (`openai_compat` / `anthropic` / `google`)
+3. **Fan-out** — ยิงทุกโมเดลพร้อมกันด้วย `asyncio.gather` (เวลารวม = ตัวช้าสุด); แต่ละตัวมี timeout เอง ตัวไหน timeout/พัง = ตัดทิ้ง ไม่ลากระบบช้า
+4. **Judge** — ปกปิดชื่อโมเดล (Answer A/B/C...) ให้ judge เลือกที่คุณภาพล้วน ไม่ใช่ที่ยี่ห้อ; ถ้า judge พัง → fallback ตัวแรก
+5. **ผลลัพธ์** — คืนคำตอบที่ดีสุด + โมเดลที่เลือก + เหตุผล + ประมาณค่าใช้จ่าย + คำตอบทุกตัว
+
+**Components** (`fusefable/`)
+
+| ไฟล์ | หน้าที่ |
+|---|---|
+| `cli.py` | Typer CLI (`ask` / `config` / `mcp`) + โหมด output |
+| `mcp_server.py` | MCP server เปิด tool `fuse_ask` |
+| `core.py` | `fuse()` entrypoint ที่ใช้ร่วมกัน + เลือกโมเดล |
+| `config.py` | โหลด/บันทึก `config.yaml` |
+| `wizard.py` | setup interactive (gateway vs เดี่ยว, ชนิด API) |
+| `routing.py` | config → `(provider, model)` routes |
+| `providers/factory.py` | เลือก adapter ตาม `kind` |
+| `providers/openai_compat.py` · `anthropic.py` · `google.py` | provider adapters |
+| `fanout.py` | fan-out ขนาน (ตัดตัวที่พัง) |
+| `judge.py` | judge แบบปกปิดชื่อ |
+| `fusion.py` | orchestrator: fan-out → judge → `FinalAnswer` |
+| `cost.py` | ประมาณค่าใช้จ่ายจาก tokens |
+| `models.py` | dataclasses: `Completion`, `FinalAnswer`, `ProviderConfig` |
 
 ## พัฒนา
 ```bash
