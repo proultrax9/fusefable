@@ -22,9 +22,11 @@ def test_run_wizard_gateway_asks_how_many_then_each_model():
         "anthropic/claude-opus-4.1",  # โมเดลที่ 2
         "qwen/qwen3-coder",        # โมเดลที่ 3
         "deepseek/deepseek-chat",  # judge
+        "n",                       # ไม่เปิด compression
     ])
     cfg = run_wizard(prompt=answers)
     assert cfg.mode == "gateway"
+    assert cfg.compress is False
     assert cfg.gateway_name == "openrouter"
     assert cfg.gateway_base_url == "https://openrouter.ai/api/v1"  # เติมอัตโนมัติ
     assert len(cfg.models) == 3
@@ -36,16 +38,26 @@ def test_run_wizard_gateway_asks_how_many_then_each_model():
 def test_run_wizard_gateway_autofills_other_known_gateway():
     # groq เป็น gateway ที่รู้จัก → เติม base_url อัตโนมัติ ไม่ถาม URL
     answers = _scripted([
-        "1", "groq", "GROQ_API_KEY", "1", "llama-3.3-70b", "llama-3.3-70b",
+        "1", "groq", "GROQ_API_KEY", "1", "llama-3.3-70b", "llama-3.3-70b", "n",
     ])
     cfg = run_wizard(prompt=answers)
     assert cfg.gateway_base_url == "https://api.groq.com/openai/v1"
 
 
+def test_run_wizard_enables_compression_when_yes():
+    answers = _scripted([
+        "1", "openrouter", "OR_KEY", "1", "m1", "judge",
+        "y", "3000",               # เปิด compression, min 3000
+    ])
+    cfg = run_wizard(prompt=answers)
+    assert cfg.compress is True
+    assert cfg.compress_min_chars == 3000
+
+
 def test_run_wizard_gateway_unknown_asks_base_url():
     # gateway ที่ไม่รู้จัก → ถาม base_url เอง (รองรับทุกเจ้า)
     answers = _scripted([
-        "1", "mygw", "https://my.gateway/v1", "MY_KEY", "1", "m1", "m1",
+        "1", "mygw", "https://my.gateway/v1", "MY_KEY", "1", "m1", "m1", "n",
     ])
     cfg = run_wizard(prompt=answers)
     assert cfg.gateway_name == "mygw"
@@ -79,6 +91,7 @@ def test_run_wizard_single_mode_native_autofills_base_url():
         # เจ้าที่ 2: openai_compat
         "ds", "openai_compat", "https://api.deepseek.com/v1", "DS_KEY", "deepseek-chat",
         "deepseek-chat",           # judge
+        "n",                       # ไม่เปิด compression
     ])
     cfg = run_wizard(prompt=answers)
     assert cfg.mode == "single"

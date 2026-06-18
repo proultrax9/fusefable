@@ -50,6 +50,10 @@ def ask(
     cheap: bool = typer.Option(False, "--cheap", help="ใช้ cheap_models ใน config"),
     compress: Optional[bool] = typer.Option(None, "--compress/--no-compress",
         help="บีบ prompt ก่อนส่งเพื่อลด token (default ตาม config)"),
+    ensemble: Optional[bool] = typer.Option(None, "--ensemble/--judge",
+        help="รวมคำตอบหลายตัวเป็นหนึ่ง (ensemble) แทนเลือกตัวเดียว (judge)"),
+    use_cache: Optional[bool] = typer.Option(None, "--cache/--no-cache",
+        help="ใช้ cache คำตอบ (default ตาม config)"),
     json_out: bool = typer.Option(False, "--json", help="output เป็น JSON"),
     quiet: bool = typer.Option(False, "--quiet", "-q",
         help="พิมพ์เฉพาะคำตอบ (เหมาะกับ pipe/subagent)"),
@@ -61,7 +65,8 @@ def ask(
 
     try:
         result = asyncio.run(fuse(cfg, q, models=model_list, cheap=cheap,
-                                  compress=compress))
+                                  compress=compress, ensemble=ensemble,
+                                  use_cache=use_cache))
     except RuntimeError as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
@@ -84,6 +89,9 @@ def ask(
                 "saved_pct": round(comp.saved_pct, 1),
                 "method": comp.method,
             }
+        out["cached"] = result.cached
+        if result.budget_warning:
+            out["budget_warning"] = result.budget_warning
         typer.echo(json.dumps(out, ensure_ascii=False, indent=2))
         return
 
@@ -91,16 +99,20 @@ def ask(
         typer.echo(result.text)
         return
 
+    if result.budget_warning:
+        typer.echo(f"⚠️  {result.budget_warning}", err=True)
     if show_all:
         for c in result.all_completions:
             typer.echo(f"\n--- {c.model} ---\n{c.text}")
         typer.echo(f"\n=== Judge reason ===\n{result.reason}")
-    typer.echo(f"\n=== Best answer (from {result.chosen_model}) ===")
+    label = "ensemble" if result.chosen_model == "ensemble" else f"from {result.chosen_model}"
+    typer.echo(f"\n=== Best answer ({label}) ===")
     typer.echo(result.text)
     if comp is not None:
         typer.echo(f"\n[compressed: {comp.original_chars}→{comp.final_chars} chars, "
                    f"~{comp.saved_pct:.0f}% saved via {comp.method}]")
-    typer.echo(f"[estimated cost: ${result.cost_usd:.4f}]")
+    cost_note = "cached, $0" if result.cached else f"${result.cost_usd:.4f}"
+    typer.echo(f"[estimated cost: {cost_note}]")
 
 
 @app.command()

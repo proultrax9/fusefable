@@ -38,3 +38,5 @@ class FinalAnswer:
     cost_usd: float = 0.0
     all_completions: list = field(default_factory=list)
     compression: object = None   # CompressionResult | None (กัน import วน)
+    cached: bool = False          # มาจาก cache หรือไม่
+    budget_warning: str = ""      # ข้อความเตือนงบ (ถ้ามี)

@@ -21,6 +21,10 @@ KNOWN_GATEWAYS = {
 
 def build_config_from_answers(answers: dict) -> Config:
     """แปลงคำตอบจาก wizard เป็น Config (logic ล้วน — แยกจาก I/O เพื่อ test ได้)."""
+    extra = dict(
+        compress=answers.get("compress", False),
+        compress_min_chars=answers.get("compress_min_chars", 2000),
+    )
     if answers["mode"] == "gateway":
         return Config(
             mode="gateway",
@@ -30,6 +34,7 @@ def build_config_from_answers(answers: dict) -> Config:
             models=answers["models"],
             judge_model=answers["judge_model"],
             timeout_seconds=answers["timeout_seconds"],
+            **extra,
         )
     providers = [SingleProvider(**p) for p in answers["providers"]]
     all_models = [m for p in providers for m in p.models]
@@ -39,7 +44,17 @@ def build_config_from_answers(answers: dict) -> Config:
         models=all_models,
         judge_model=answers["judge_model"],
         timeout_seconds=answers["timeout_seconds"],
+        **extra,
     )
+
+
+def _ask_compression(prompt) -> dict:
+    """ถามตั้งค่า compression — คืน dict ใส่ใน answers."""
+    ans = prompt("เปิดการบีบ prompt เพื่อลด token? [y/N]: ").strip().lower()
+    if ans not in ("y", "yes"):
+        return {"compress": False}
+    raw = prompt("  บีบเมื่อ prompt ยาวเกินกี่ตัวอักษร? [2000]: ").strip()
+    return {"compress": True, "compress_min_chars": int(raw) if raw else 2000}
 
 
 def run_wizard(prompt=input) -> Config:
@@ -65,10 +80,11 @@ def run_wizard(prompt=input) -> Config:
             if m:
                 models.append(m)
         judge = prompt("judge model: ").strip()
+        comp = _ask_compression(prompt)
         return build_config_from_answers({
             "mode": "gateway", "gateway_name": gw, "gateway_base_url": base,
             "api_key_env": key_env, "models": models, "judge_model": judge,
-            "timeout_seconds": 90,
+            "timeout_seconds": 90, **comp,
         })
 
     n = int(prompt("จะใช้กี่เจ้า?: ").strip())
@@ -89,7 +105,8 @@ def run_wizard(prompt=input) -> Config:
         providers.append({"name": name, "base_url": base, "kind": kind,
                           "api_key_env": key_env, "models": models})
     judge = prompt("judge model: ").strip()
+    comp = _ask_compression(prompt)
     return build_config_from_answers({
         "mode": "single", "providers": providers,
-        "judge_model": judge, "timeout_seconds": 90,
+        "judge_model": judge, "timeout_seconds": 90, **comp,
     })

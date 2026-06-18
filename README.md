@@ -117,6 +117,24 @@ Exposes a tool `fuse_ask(question, models?, cheap?)` for any MCP client.
 > Requires `pip install "fusefable[mcp]"` and a completed `fusefable config`.
 > If `fusefable` isn't on the app's PATH, use a full path such as `python -m fusefable.cli`.
 
+## Ensemble, cache & budget
+
+```bash
+fusefable ask --ensemble "..."     # merge all answers into one (vs picking one)
+fusefable ask --cache "..."        # reuse the answer for an identical question
+fusefable ask --no-cache "..."     # force a fresh run
+```
+
+- **Ensemble mode** (`--ensemble`, config `fusion_mode: ensemble`): instead of the judge
+  picking one answer, a model synthesizes a single answer combining the strengths of all
+  candidates (anonymized). Falls back to the first answer if synthesis fails.
+- **Cache** (`--cache`, config `cache: true`, `cache_ttl_seconds`): identical question +
+  same models/mode/compression returns the stored answer instantly with no API calls
+  (`cached, $0`). Stored in `~/.fusefable/cache/`. `cache_ttl_seconds: 0` = never expires.
+- **Budget cap** (config `budget_cap_usd`, `budget_action: warn|stop`): before firing,
+  the run estimates cost. If it exceeds the cap — `warn` prints a warning and continues,
+  `stop` aborts before spending anything.
+
 ## Prompt compression (save tokens)
 
 Reduce token usage while keeping answer quality — useful when you pay per-provider

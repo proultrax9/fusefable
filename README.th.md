@@ -116,6 +116,22 @@ fusefable mcp
 > ต้องติดตั้ง `pip install "fusefable[mcp]"` และรัน `fusefable config` ไว้ก่อน
 > ถ้า `fusefable` ไม่อยู่ใน PATH ของแอป ให้ใส่ path เต็ม เช่น `python -m fusefable.cli`
 
+## Ensemble, Cache & Budget
+
+```bash
+fusefable ask --ensemble "..."     # รวมทุกคำตอบเป็นหนึ่ง (แทนเลือกตัวเดียว)
+fusefable ask --cache "..."        # คำถามเดิมใช้คำตอบเดิม ไม่ยิงใหม่
+fusefable ask --no-cache "..."     # บังคับยิงใหม่
+```
+
+- **Ensemble** (`--ensemble`, config `fusion_mode: ensemble`): แทนที่ judge เลือกตัวเดียว
+  ให้โมเดลสังเคราะห์รวมจุดเด่นทุกคำตอบ (ปกปิดชื่อ) เป็นคำตอบเดียว; ถ้าพัง → fallback คำตอบแรก
+- **Cache** (`--cache`, config `cache: true`, `cache_ttl_seconds`): คำถามเดิม +
+  โมเดล/โหมด/compression เดิม คืนคำตอบที่เก็บไว้ทันที ไม่เรียก API (`cached, $0`)
+  เก็บที่ `~/.fusefable/cache/`; `cache_ttl_seconds: 0` = ไม่หมดอายุ
+- **Budget cap** (config `budget_cap_usd`, `budget_action: warn|stop`): ก่อนยิงจะประเมินค่าใช้จ่าย
+  ถ้าเกิน cap — `warn` เตือนแล้วทำต่อ, `stop` ยกเลิกก่อนจ่ายเงิน
+
 ## บีบ prompt ลด token (Prompt compression)
 
 ลดการใช้ token แต่คงคุณภาพคำตอบ — เหมาะกับสายที่จ่ายตรงรายเจ้า เปิดด้วย `--compress`:

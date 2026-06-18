@@ -30,6 +30,10 @@ class Config:
     compress: bool = False              # บีบ prompt ก่อนส่ง (opt-in)
     compress_min_chars: int = 2000      # ต่ำกว่านี้ไม่เรียก LLM บีบ
     compress_model: str = ""            # ว่าง = ใช้ judge_model
+    fusion_mode: str = "judge"          # "judge" (เลือกตัวดีสุด) | "ensemble" (รวมคำตอบ)
+    cache: bool = False                 # cache คำตอบ (opt-in)
+    cache_ttl_seconds: int = 0          # 0 = ไม่หมดอายุ
+    budget_action: str = "warn"         # "warn" | "stop" เมื่อประเมินเกิน budget_cap_usd
 
     def resolve_api_key(self) -> str:
         return os.environ.get(self.api_key_env, "")

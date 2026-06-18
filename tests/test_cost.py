@@ -1,5 +1,12 @@
-from fusefable.cost import estimate_cost
+from fusefable.cost import estimate_cost, estimate_prefire_cost
 from fusefable.models import Completion
+
+
+def test_estimate_prefire_scales_with_models():
+    one = estimate_prefire_cost("x" * 4000, n_models=1)
+    five = estimate_prefire_cost("x" * 4000, n_models=5)
+    assert five > one              # ยิ่งหลายโมเดล ยิ่งแพง
+    assert one > 0
 
 
 def test_estimate_cost_sums_tokens():
