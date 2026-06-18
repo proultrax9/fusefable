@@ -1,5 +1,10 @@
 # Fuse Fable (ภาษาไทย)
 
+[![PyPI](https://img.shields.io/pypi/v/fusefable)](https://pypi.org/project/fusefable/)
+[![Python](https://img.shields.io/pypi/pyversions/fusefable)](https://pypi.org/project/fusefable/)
+[![CI](https://github.com/proultrax9/fusefable/actions/workflows/ci.yml/badge.svg)](https://github.com/proultrax9/fusefable/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/pypi/l/fusefable)](https://github.com/proultrax9/fusefable/blob/main/LICENSE)
+
 🌐 **ภาษา:** [English](https://github.com/proultrax9/fusefable/blob/main/README.md) · ไทย
 
 ฟิวชั่นหลาย AI model พร้อมกัน แล้วเลือกคำตอบที่ดีที่สุดสำหรับงานโค้ด — latency ≈ x2

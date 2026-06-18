@@ -1,5 +1,10 @@
 # Fuse Fable
 
+[![PyPI](https://img.shields.io/pypi/v/fusefable)](https://pypi.org/project/fusefable/)
+[![Python](https://img.shields.io/pypi/pyversions/fusefable)](https://pypi.org/project/fusefable/)
+[![CI](https://github.com/proultrax9/fusefable/actions/workflows/ci.yml/badge.svg)](https://github.com/proultrax9/fusefable/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/pypi/l/fusefable)](https://github.com/proultrax9/fusefable/blob/main/LICENSE)
+
 🌐 **Languages:** English · [ไทย (Thai)](https://github.com/proultrax9/fusefable/blob/main/README.th.md)
 
 Fan out a coding prompt to many AI models **in parallel**, then let a judge pick the
