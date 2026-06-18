@@ -116,6 +116,25 @@ fusefable mcp
 > ต้องติดตั้ง `pip install "fusefable[mcp]"` และรัน `fusefable config` ไว้ก่อน
 > ถ้า `fusefable` ไม่อยู่ใน PATH ของแอป ให้ใส่ path เต็ม เช่น `python -m fusefable.cli`
 
+## บีบ prompt ลด token (Prompt compression)
+
+ลดการใช้ token แต่คงคุณภาพคำตอบ — เหมาะกับสายที่จ่ายตรงรายเจ้า เปิดด้วย `--compress`:
+
+```bash
+fusefable ask --compress "<prompt ยาว หรือโค้ดที่ paste มา>"
+# [compressed: 5200→1800 chars, ~65% saved via llm]
+```
+
+- **ชั้น 1 (lossless):** ตัด trailing space, ยุบบรรทัดว่างซ้ำ, ลบ zero-width —
+  **คง indentation และช่องว่างภายในไว้ครบ** (ปลอดภัยสำหรับโค้ด)
+- **ชั้น 2 (LLM):** prompt ยาวเกิน `compress_min_chars` (default 2000) ให้โมเดลถูกบีบ
+  เชิงความหมาย **ครั้งเดียว** แล้วส่งไปทุกโมเดล → ประหยัด `token × จำนวนโมเดล`
+- **กันคุณภาพ:** prompt สั้นข้ามชั้น 2; ถ้าผลบีบ ว่าง/ยาวกว่าเดิม/สั้นกว่า 30% ของเดิม →
+  fallback ใช้ lossless; **judge ใช้คำถามเดิมเสมอ**
+
+Config (`~/.fusefable/config.yaml`): `compress`, `compress_min_chars`, `compress_model`
+(ว่าง = ใช้ judge model)
+
 ## สถาปัตยกรรม (Architecture)
 
 ```

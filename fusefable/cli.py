@@ -48,6 +48,8 @@ def ask(
     models: Optional[str] = typer.Option(None, "--models",
         help="จำกัดเฉพาะโมเดลที่ระบุ คั่นด้วย comma"),
     cheap: bool = typer.Option(False, "--cheap", help="ใช้ cheap_models ใน config"),
+    compress: Optional[bool] = typer.Option(None, "--compress/--no-compress",
+        help="บีบ prompt ก่อนส่งเพื่อลด token (default ตาม config)"),
     json_out: bool = typer.Option(False, "--json", help="output เป็น JSON"),
     quiet: bool = typer.Option(False, "--quiet", "-q",
         help="พิมพ์เฉพาะคำตอบ (เหมาะกับ pipe/subagent)"),
@@ -58,20 +60,31 @@ def ask(
     model_list = [m.strip() for m in models.split(",")] if models else None
 
     try:
-        result = asyncio.run(fuse(cfg, q, models=model_list, cheap=cheap))
+        result = asyncio.run(fuse(cfg, q, models=model_list, cheap=cheap,
+                                  compress=compress))
     except RuntimeError as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
 
+    comp = result.compression
+
     if json_out:
-        typer.echo(json.dumps({
+        out = {
             "answer": result.text,
             "chosen_model": result.chosen_model,
             "reason": result.reason,
             "cost_usd": result.cost_usd,
             "candidates": [{"model": c.model, "text": c.text}
                            for c in result.all_completions],
-        }, ensure_ascii=False, indent=2))
+        }
+        if comp is not None:
+            out["compression"] = {
+                "original_chars": comp.original_chars,
+                "final_chars": comp.final_chars,
+                "saved_pct": round(comp.saved_pct, 1),
+                "method": comp.method,
+            }
+        typer.echo(json.dumps(out, ensure_ascii=False, indent=2))
         return
 
     if quiet:
@@ -84,7 +97,10 @@ def ask(
         typer.echo(f"\n=== Judge reason ===\n{result.reason}")
     typer.echo(f"\n=== Best answer (from {result.chosen_model}) ===")
     typer.echo(result.text)
-    typer.echo(f"\n[estimated cost: ${result.cost_usd:.4f}]")
+    if comp is not None:
+        typer.echo(f"\n[compressed: {comp.original_chars}→{comp.final_chars} chars, "
+                   f"~{comp.saved_pct:.0f}% saved via {comp.method}]")
+    typer.echo(f"[estimated cost: ${result.cost_usd:.4f}]")
 
 
 @app.command()

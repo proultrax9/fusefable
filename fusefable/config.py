@@ -27,6 +27,9 @@ class Config:
     min_responses: int = 1
     budget_cap_usd: float | None = None
     cheap_models: list[str] = field(default_factory=list)
+    compress: bool = False              # บีบ prompt ก่อนส่ง (opt-in)
+    compress_min_chars: int = 2000      # ต่ำกว่านี้ไม่เรียก LLM บีบ
+    compress_model: str = ""            # ว่าง = ใช้ judge_model
 
     def resolve_api_key(self) -> str:
         return os.environ.get(self.api_key_env, "")

@@ -117,6 +117,28 @@ Exposes a tool `fuse_ask(question, models?, cheap?)` for any MCP client.
 > Requires `pip install "fusefable[mcp]"` and a completed `fusefable config`.
 > If `fusefable` isn't on the app's PATH, use a full path such as `python -m fusefable.cli`.
 
+## Prompt compression (save tokens)
+
+Reduce token usage while keeping answer quality — useful when you pay per-provider
+directly. Two tiers, opt-in via `--compress`:
+
+```bash
+fusefable ask --compress "<long prompt or pasted code>"
+# [compressed: 5200→1800 chars, ~65% saved via llm]
+```
+
+- **Tier 1 (lossless):** trims trailing whitespace, collapses blank lines, strips
+  zero-width chars — keeps indentation and inner spacing intact (safe for code).
+- **Tier 2 (LLM):** for prompts above `compress_min_chars` (default 2000), a cheap
+  model compresses semantically — **once**, then the compressed prompt is sent to all
+  models, so you save `tokens × number-of-models`.
+- **Quality guards:** prompts under the threshold skip the LLM; if the compressed
+  result is empty, longer, or under 30% of the original, it falls back to the lossless
+  text. The judge always sees the **original** question.
+
+Config (`~/.fusefable/config.yaml`): `compress`, `compress_min_chars`, `compress_model`
+(empty = reuse the judge model).
+
 ## Architecture
 
 ```

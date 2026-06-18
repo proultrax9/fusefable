@@ -37,3 +37,4 @@ class FinalAnswer:
     reason: str = ""
     cost_usd: float = 0.0
     all_completions: list = field(default_factory=list)
+    compression: object = None   # CompressionResult | None (กัน import วน)

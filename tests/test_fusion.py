@@ -27,6 +27,26 @@ async def test_run_fusion_end_to_end():
 
 
 @pytest.mark.asyncio
+async def test_run_fusion_uses_judge_question_for_judging():
+    seen = {}
+
+    class FakeProvider:
+        async def complete(self, model, prompt):
+            if model == "judge":
+                seen["judge_prompt"] = prompt
+                return Completion(model=model, text="I choose A")
+            return Completion(model=model, text="ans")
+
+    prov = FakeProvider()
+    routes = [(prov, "m1")]
+    await run_fusion(routes, prov, "judge", "COMPRESSED", timeout_s=5,
+                     judge_question="ORIGINAL QUESTION")
+    # judge ต้องเห็นคำถามเดิม ไม่ใช่ตัวที่บีบ
+    assert "ORIGINAL QUESTION" in seen["judge_prompt"]
+    assert "COMPRESSED" not in seen["judge_prompt"]
+
+
+@pytest.mark.asyncio
 async def test_run_fusion_raises_when_all_fail():
     class DeadProvider:
         async def complete(self, model, prompt):
