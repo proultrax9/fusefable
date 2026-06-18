@@ -39,6 +39,19 @@ jobs:
         with:
           name: dist
           path: dist/
+      # ตรวจว่า secret ถูกส่งเข้า job จริง (โชว์แค่ความยาว ไม่เผยค่า)
+      - name: Verify PYPI_API_TOKEN secret present
+        env:
+          TOK: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          if [ -z "$TOK" ]; then
+            echo "::error::PYPI_API_TOKEN secret is EMPTY or not visible to this job (check name / Repository secret)"
+            exit 1
+          fi
+          case "$TOK" in
+            pypi-*) echo "PYPI_API_TOKEN present (length=${#TOK}, prefix ok)";;
+            *) echo "::warning::token present (length=${#TOK}) but does NOT start with 'pypi-'";;
+          esac
       # ใช้ PyPI API token ที่เก็บใน GitHub Secret ชื่อ PYPI_API_TOKEN
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
