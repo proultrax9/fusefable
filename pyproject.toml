@@ -1,6 +1,6 @@
 [project]
 name = "fusefable"
-version = "0.1.6"
+version = "0.1.7"
 description = "Fuse multiple AI models and judge the best answer for coding"
 readme = "README.md"
 license = { text = "MIT" }
