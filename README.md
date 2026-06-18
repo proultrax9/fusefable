@@ -31,9 +31,9 @@ fusefable config
 ```
 - Choose **AI Gateway** → one key for everything, then it asks "how many models?" and
   prompts for each one.
-  - Known gateways (base URL auto-filled): `openrouter`, `groq`, `together`,
+  - Known gateways/providers (base URL auto-filled): `openrouter`, `groq`, `together`,
     `fireworks`, `deepinfra`, `novita`, `hyperbolic`, `aimlapi`, `portkey`,
-    `deepseek`, `openai` — any other works too, just type its base URL.
+    `deepseek`, `openai`, `minimax`, `mimo` — any other works too, just type its base URL.
 - Or **Single providers** → it asks how many, then the **API kind** of each:
   - `openai_compat` — any OpenAI-compatible endpoint (you provide the base URL)
   - `anthropic` — Anthropic native (`/v1/messages`, base URL auto-filled)
@@ -113,6 +113,26 @@ Exposes a tool `fuse_ask(question, models?, cheap?)` for any MCP client.
   }
 }
 ```
+
+### Hermes Agent (Nous Research)
+[Hermes](https://hermes-agent.nousresearch.com/) is an MCP client (usable over Telegram,
+Discord, etc.). Add Fuse Fable as a stdio MCP server in your Hermes config (`mcp_servers`):
+```json
+{
+  "mcp_servers": {
+    "fusefable": {
+      "transport": "stdio",
+      "command": "fusefable",
+      "args": ["mcp"],
+      "env": { "OPENROUTER_API_KEY": "sk-..." }
+    }
+  }
+}
+```
+Then run `hermes mcp install` (or restart the gateway) to pick it up. See the
+[Hermes MCP docs](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp).
+The `fuse_ask` tool becomes available to your Hermes agent — handy when driving it
+remotely (e.g. via Telegram) against external providers like MiniMax or MiMo.
 
 > Requires `pip install "fusefable[mcp]"` and a completed `fusefable config`.
 > If `fusefable` isn't on the app's PATH, use a full path such as `python -m fusefable.cli`.

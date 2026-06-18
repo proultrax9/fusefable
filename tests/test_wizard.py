@@ -44,6 +44,12 @@ def test_run_wizard_gateway_autofills_other_known_gateway():
     assert cfg.gateway_base_url == "https://api.groq.com/openai/v1"
 
 
+def test_minimax_mimo_in_known_gateways():
+    from fusefable.wizard import KNOWN_GATEWAYS
+    assert KNOWN_GATEWAYS["minimax"] == "https://api.minimax.io/v1"
+    assert KNOWN_GATEWAYS["mimo"] == "https://api.xiaomimimo.com/v1"
+
+
 def test_run_wizard_enables_compression_when_yes():
     answers = _scripted([
         "1", "openrouter", "OR_KEY", "1", "m1", "judge",

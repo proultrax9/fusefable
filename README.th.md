@@ -32,7 +32,7 @@ fusefable config
 - เลือก **AI Gateway** → ใส่ key เดียวพอ แล้วถาม "จะใช้กี่โมเดล?" → วนถามทีละตัว
   - รองรับหลายเจ้า (เติม URL อัตโนมัติ): `openrouter`, `groq`, `together`,
     `fireworks`, `deepinfra`, `novita`, `hyperbolic`, `aimlapi`, `portkey`,
-    `deepseek`, `openai` — เจ้าอื่นก็ใช้ได้ แค่พิมพ์ base_url เอง
+    `deepseek`, `openai`, `minimax`, `mimo` — เจ้าอื่นก็ใช้ได้ แค่พิมพ์ base_url เอง
 - หรือ **Provider เดี่ยว** → ถามว่าจะใช้กี่เจ้า แล้วถาม **ชนิด API** ของแต่ละเจ้า:
   - `openai_compat` — เจ้าที่เป็น OpenAI-compatible (ใส่ base_url เอง)
   - `anthropic` — Anthropic native (`/v1/messages`, เติม base_url อัตโนมัติ)
@@ -112,6 +112,25 @@ fusefable mcp
   }
 }
 ```
+
+### Hermes Agent (Nous Research)
+[Hermes](https://hermes-agent.nousresearch.com/) เป็น MCP client (ใช้ผ่าน Telegram/Discord ฯลฯ ได้)
+เพิ่ม Fuse Fable เป็น stdio MCP server ใน config ของ Hermes (`mcp_servers`):
+```json
+{
+  "mcp_servers": {
+    "fusefable": {
+      "transport": "stdio",
+      "command": "fusefable",
+      "args": ["mcp"],
+      "env": { "OPENROUTER_API_KEY": "sk-..." }
+    }
+  }
+}
+```
+แล้วรัน `hermes mcp install` (หรือ restart gateway) — tool `fuse_ask` จะใช้ได้ใน Hermes
+เหมาะกับสั่งงานทางไกล (เช่นผ่าน Telegram) ไปยัง provider นอกอย่าง MiniMax/MiMo
+ดู [Hermes MCP docs](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp)
 
 > ต้องติดตั้ง `pip install "fusefable[mcp]"` และรัน `fusefable config` ไว้ก่อน
 > ถ้า `fusefable` ไม่อยู่ใน PATH ของแอป ให้ใส่ path เต็ม เช่น `python -m fusefable.cli`
