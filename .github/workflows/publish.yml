@@ -34,6 +34,11 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
+    # deploy เข้า environment 'pypi' เพื่อให้สถานะ deployment เป็นเขียวเมื่อสำเร็จ
+    # (ยังใช้ token จาก Repository secret FUSEFABLE — ไม่ใช้ OIDC)
+    environment:
+      name: pypi
+      url: https://pypi.org/project/fusefable/
     steps:
       - uses: actions/download-artifact@v4
         with:
