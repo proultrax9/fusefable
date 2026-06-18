@@ -131,5 +131,13 @@ def mcp():
     run_mcp()
 
 
+@app.command()
+def gui():
+    """เปิดหน้าต่างโปรแกรม (desktop window) แบบ Cursor/VS Code."""
+    cfg = _load_or_die()
+    from fusefable.desktop import run_app
+    run_app(cfg)
+
+
 if __name__ == "__main__":
     app()

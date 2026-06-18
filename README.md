@@ -17,6 +17,7 @@ and as a **subagent / pipe** (callable by other tools and scripts).
 ```bash
 pip install fusefable            # core
 pip install "fusefable[mcp]"     # if you want the MCP server
+pip install "fusefable[app]"     # if you want the desktop window (fusefable gui)
 ```
 From source:
 ```bash
@@ -46,6 +47,17 @@ setx OPENROUTER_API_KEY "sk-..."      # Windows (open a new terminal afterwards)
 ```
 
 Config is stored at `~/.fusefable/config.yaml`.
+
+## 0) Use as a desktop app
+
+A native window (like Cursor/VS Code), no browser tab — chat UI with toggles for
+compress / ensemble / cache and a model filter:
+```bash
+pip install "fusefable[app]"
+fusefable gui
+```
+Built on PyWebView (uses the system webview), so it's lightweight and cross-platform.
+Requires a completed `fusefable config`.
 
 ## 1) Use as a CLI
 ```bash

@@ -17,6 +17,7 @@
 ```bash
 pip install fusefable            # หลัก
 pip install "fusefable[mcp]"     # ถ้าจะใช้เป็น MCP server
+pip install "fusefable[app]"     # ถ้าจะใช้หน้าต่าง desktop (fusefable gui)
 ```
 หรือจาก source:
 ```bash
@@ -45,6 +46,16 @@ setx OPENROUTER_API_KEY "sk-..."      # Windows (เปิด terminal ใหม
 ```
 
 config ถูกเก็บที่ `~/.fusefable/config.yaml`
+
+## 0) ใช้เป็นหน้าต่างโปรแกรม (desktop app)
+
+หน้าต่างจริงแบบ Cursor/VS Code (ไม่ใช่ browser tab) — chat UI มีปุ่ม toggle
+compress / ensemble / cache + ช่องเลือกโมเดล:
+```bash
+pip install "fusefable[app]"
+fusefable gui
+```
+ใช้ PyWebView (อาศัย webview ของระบบ) เบาและข้ามแพลตฟอร์มได้ ต้องรัน `fusefable config` ก่อน
 
 ## 1) ใช้เป็น CLI
 ```bash

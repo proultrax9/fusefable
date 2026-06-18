@@ -1,6 +1,6 @@
 [project]
 name = "fusefable"
-version = "0.3.1"
+version = "0.4.0"
 description = "Fuse multiple AI models and judge the best answer for coding"
 readme = "README.md"
 license = { text = "MIT" }
@@ -27,6 +27,7 @@ Repository = "https://github.com/proultrax9/fusefable"
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "respx>=0.21"]
 mcp = ["mcp>=1.2"]
+app = ["pywebview>=5"]
 
 [project.scripts]
 fusefable = "fusefable.cli:app"
