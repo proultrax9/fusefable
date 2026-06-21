@@ -26,9 +26,17 @@ def _patch(monkeypatch):
     monkeypatch.setattr("fusefable.cli._load_or_die", lambda: _fake_cfg())
 
 
-def test_ask_command_prints_answer(monkeypatch):
+def test_ask_command_prints_answer_only(monkeypatch):
     _patch(monkeypatch)
     result = runner.invoke(app, ["ask", "write quicksort"])
+    assert result.exit_code == 0
+    assert result.stdout.strip() == "best answer"
+    assert "gpt-5" not in result.stdout
+
+
+def test_ask_verbose_shows_metadata(monkeypatch):
+    _patch(monkeypatch)
+    result = runner.invoke(app, ["ask", "q", "--verbose"])
     assert result.exit_code == 0
     assert "best answer" in result.stdout
     assert "gpt-5" in result.stdout

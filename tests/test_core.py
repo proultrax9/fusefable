@@ -1,4 +1,3 @@
-import pytest
 from fusefable.config import Config
 from fusefable.core import select_models
 

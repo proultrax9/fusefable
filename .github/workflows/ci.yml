@@ -19,5 +19,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install
         run: pip install -e ".[dev,mcp]"
+      - name: Lint (ruff)
+        run: ruff check fusefable tests
       - name: Run tests
         run: pytest -q

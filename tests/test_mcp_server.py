@@ -24,6 +24,25 @@ async def test_fuse_ask_impl_returns_best_text(monkeypatch):
     assert captured["cheap"] is True
 
 
+def test_build_server_registers_fuse_ask_tool():
+    pytest.importorskip("mcp")
+    import asyncio
+    server = mcp_server.build_server()
+    tools = asyncio.run(server.list_tools())
+    names = [t.name for t in tools]
+    assert "fuse_ask" in names
+
+
+def test_run_mcp_without_mcp_installed(monkeypatch):
+    # จำลองว่าไม่มี mcp → ต้องขึ้น SystemExit พร้อมคำแนะนำติดตั้ง
+    def boom():
+        raise ImportError("no mcp")
+    monkeypatch.setattr(mcp_server, "build_server", boom)
+    with pytest.raises(SystemExit) as ei:
+        mcp_server.run_mcp()
+    assert "fusefable[mcp]" in str(ei.value)
+
+
 @pytest.mark.asyncio
 async def test_fuse_ask_impl_no_models(monkeypatch):
     monkeypatch.setattr(mcp_server, "load_config", lambda _p: "CFG")

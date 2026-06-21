@@ -1,0 +1,40 @@
+{
+  "name": "fusion-fable",
+  "version": "0.4.0",
+  "description": "Fusion Fable — Cursor-style AI fusion desktop",
+  "main": "main.js",
+  "author": "Fusion Fable",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win portable"
+  },
+  "dependencies": {
+    "monaco-editor": "^0.52.2"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.fusionfable.desktop",
+    "productName": "Fusion Fable",
+    "directories": { "output": "../dist-electron" },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "node_modules/monaco-editor/min/**/*"
+    ],
+    "extraResources": [
+      { "from": "../dist/FusionFableBackend.exe", "to": "fusion-backend.exe" }
+    ],
+    "win": {
+      "target": [{ "target": "portable", "arch": ["x64"] }],
+      "icon": "../FuseFable.ico",
+      "artifactName": "Fusion Fable.${ext}",
+      "signAndEditExecutable": false
+    },
+    "portable": { "artifactName": "Fusion Fable.exe" }
+  }
+}

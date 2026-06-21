@@ -1,6 +1,6 @@
 import httpx
 from fusefable.config import Config, SingleProvider
-from fusefable.routing import build_routes, build_judge_provider
+from fusefable.routing import build_routes
 
 
 def test_build_routes_gateway_mode(monkeypatch):

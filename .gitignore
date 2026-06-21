@@ -7,3 +7,12 @@ venv/
 config.yaml
 .fusefable/
 .env
+build/
+dist/
+*.spec
+desktop_build/build/
+desktop_build/dist/
+desktop_build/dist-electron/
+desktop_build/build-backend/
+desktop_build/electron/node_modules/
+desktop_build/*.spec

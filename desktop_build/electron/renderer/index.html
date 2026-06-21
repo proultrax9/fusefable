@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: http://127.0.0.1:*; img-src 'self' data: blob:;">
+<title>Fusion Fable</title>
+<link rel="stylesheet" href="cursor.css">
+</head>
+<body>
+<div id="app" class="vscode">
+  <!-- title bar -->
+  <header class="titlebar">
+    <div class="titlebar-drag"></div>
+    <span class="titlebar-title" id="winTitle">Fusion Fable</span>
+    <div class="titlebar-actions">
+      <span class="status-pill" id="statusText">Ready</span>
+      <button class="codicon-btn" id="btnSettings" title="Settings">⚙</button>
+    </div>
+  </header>
+
+  <!-- menu strip (Cursor-like) -->
+  <nav class="menubar">
+    <button class="menu-item" data-action="open-folder">File</button>
+    <button class="menu-item" data-action="new-chat">Chat</button>
+    <button class="menu-item" id="menuSettings">Settings</button>
+  </nav>
+
+  <div class="workbench">
+    <!-- activity bar -->
+    <aside class="activitybar">
+      <button class="ab-item active" data-panel="explorer" title="Explorer">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
+      </button>
+      <button class="ab-item" data-panel="chat" title="Agent">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.02 2 10.5c0 2.47 1.33 4.67 3.4 6.08L4 22l5.5-2.5c.8.15 1.63.23 2.5.23 5.52 0 10-4.02 10-8.5S17.52 2 12 2z"/></svg>
+      </button>
+      <div class="ab-spacer"></div>
+      <button class="ab-item" id="abSettings" title="Settings">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zm9.4 4a7.4 7.4 0 01-.12 1.3l2.03 1.58-1.92 3.32-2.39-1a7.6 7.6 0 01-2.25 1.3l-.36 2.54H9.22l-.36-2.54a7.6 7.6 0 01-2.25-1.3l-2.39 1-1.92-3.32 2.03-1.58A7.4 7.4 0 014.6 12a7.4 7.4 0 01.12-1.3L2.69 9.12l1.92-3.32 2.39 1a7.6 7.6 0 012.25-1.3L9.22 2h5.56l.36 2.54a7.6 7.6 0 012.25 1.3l2.39-1 1.92 3.32-2.03 1.58c.08.43.12.86.12 1.3z"/></svg>
+      </button>
+    </aside>
+
+    <div class="main-area" id="mainArea">
+      <!-- explorer -->
+      <aside class="sidebar panel-explorer" id="panelExplorer" style="width:260px">
+        <div class="sidebar-header">
+          <span>EXPLORER</span>
+          <div class="sidebar-actions">
+            <button id="btnOpenFolder" title="Open Folder">📂</button>
+            <button id="btnRefreshTree" title="Refresh">↻</button>
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <div class="section-head" id="projectLabel">NO FOLDER OPENED</div>
+          <div class="file-tree" id="fileTree"></div>
+        </div>
+      </aside>
+
+      <div class="sash vertical" id="sashExplorer" data-panel="panelExplorer"></div>
+
+      <!-- agent chat (center — full width when editor closed) -->
+      <main class="panel-chat" id="panelChat">
+        <div class="chat-header">
+          <div class="chat-tabs">
+            <button class="chat-tab active" id="chatTabTitle">New Chat</button>
+          </div>
+          <div class="chat-header-actions">
+            <button id="btnHistory" class="ghost-btn">History</button>
+            <button id="btnNewChat" class="ghost-btn">+ New Chat</button>
+          </div>
+        </div>
+        <div class="history-dropdown hidden" id="historyDropdown">
+          <div id="chatList" class="chat-list"></div>
+        </div>
+        <div class="chat-scroll" id="chatScroll">
+          <div class="chat-content" id="messages"></div>
+        </div>
+        <footer class="composer-area">
+          <div class="ctx-bar hidden" id="ctxBar"></div>
+          <div class="composer-box">
+            <textarea id="composer" rows="1" placeholder="Plan, @ for context…"></textarea>
+            <div class="composer-toolbar">
+              <div class="composer-left">
+                <span class="mode-chip">∞ Agent</span>
+                <span class="mode-chip muted">Auto</span>
+              </div>
+              <div class="composer-right">
+                <span class="composer-hint">↵ send · ⇧↵ newline</span>
+                <button id="btnSend" class="send-btn" title="Send">↑</button>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </main>
+
+      <div class="sash vertical closed" id="sashEditor" data-panel="panelEditor"></div>
+
+      <!-- editor right -->
+      <section class="panel-editor closed" id="panelEditor" style="width:480px">
+        <div class="editor-tabs" id="editorTabs"></div>
+        <div class="editor-container" id="editorContainer"></div>
+        <div class="editor-statusbar">
+          <span id="edInfo"></span>
+          <span id="edToast" class="hidden">Saved</span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- status bar -->
+  <footer class="statusbar">
+    <span class="status-item" id="sbBranch">⎇ main</span>
+    <span class="status-item" id="sbProject">Fusion Fable</span>
+    <span class="status-spacer"></span>
+    <span class="status-item" id="sbFiles"></span>
+    <span class="status-item accent">Fusion AI</span>
+  </footer>
+</div>
+
+<!-- settings modal -->
+<div class="modal-overlay hidden" id="settingsModal">
+  <div class="modal">
+    <h2>Settings</h2>
+    <p class="modal-sub">Providers &amp; API keys</p>
+    <div id="provList"></div>
+    <button type="button" id="addProv" class="link-btn">+ Add provider</button>
+    <label>Judge / synthesizer model</label>
+    <input type="text" id="setJudge" placeholder="blank = first model">
+    <label class="checkbox-row"><input type="checkbox" id="setCompress"> Compress prompts</label>
+    <div class="modal-actions">
+      <button type="button" id="setTest">Test models</button>
+      <button type="button" id="setCancel">Cancel</button>
+      <button type="button" id="setSave" class="primary">Save</button>
+    </div>
+    <p class="error-text" id="setErr"></p>
+  </div>
+</div>
+
+<input type="checkbox" id="optCompress" class="hidden">
+<input type="checkbox" id="optEnsemble" class="hidden">
+<input type="checkbox" id="optCache" class="hidden">
+
+<script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

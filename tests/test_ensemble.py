@@ -9,7 +9,8 @@ def test_build_ensemble_prompt_anonymizes():
     p = build_ensemble_prompt("q?", comps)
     assert "claude" not in p and "gpt" not in p
     assert "Answer A" in p and "Answer B" in p
-    assert "merg" in p.lower()
+    assert "synthesiz" in p.lower()
+    assert "Do NOT pick one" in p
 
 
 @pytest.mark.asyncio

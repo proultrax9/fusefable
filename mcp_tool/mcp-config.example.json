@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "fusefable": {
+      "command": "fusefable",
+      "args": ["mcp"]
+    },
+    "fusefable-local": {
+      "command": "python",
+      "args": ["C:/Users/User/Desktop/Project Fable 5 Fusion/mcp_tool/run_mcp.py"]
+    }
+  }
+}
