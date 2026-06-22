@@ -8,7 +8,6 @@ import json
 import re
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Optional
 from urllib.parse import unquote
 
 from fusefable.desktop import Api, _load_or_default

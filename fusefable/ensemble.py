@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import Sequence
 from fusefable.client import call_model
 from fusefable.models import Completion
+from fusefable.providers.base import Provider
 from fusefable.edits import ENSEMBLE_EDIT_NOTE
 
 _LABELS = "ABCDEFGHIJ"

@@ -1,5 +1,4 @@
 def test_desktop_server_health():
-    import threading
     from fusefable.desktop_server import run_server
     import urllib.request
     import json
